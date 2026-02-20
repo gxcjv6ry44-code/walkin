@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walk-In Tally</title>
+<style>
+body { font-family: system-ui; padding:20px; background:#f6f7f9; }
+.card { max-width:500px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.1); }
+input, select { width:100%; padding:10px; margin-top:6px; margin-bottom:14px; border-radius:8px; border:1px solid #ccc; }
+button { padding:12px; width:100%; background:#2563eb; color:white; border:0; border-radius:10px; font-weight:700; }
+.success { margin-top:12px; font-weight:700; color:green; }
+</style>
+</head>
+<body>
+
+<div class="card">
+<h2>Walk-In Tally</h2>
+
+<form id="walkForm">
+<label>Shift</label>
+<select name="shift" required>
+<option value="">Select shift</option>
+<option>AM Volunteer</option>
+<option>PM Volunteer</option>
+<option>Youth Night</option>
+</select>
+
+<label>Stake</label>
+<select name="stake" required>
+<option value="">Select stake</option>
+<option>North Ogden</option>
+<option>Pleasant View</option>
+<option>Plain City</option>
+</select>
+
+<label>Number of People</label>
+<input type="number" name="count" min="1" required>
+
+<label>Submitted By (optional)</label>
+<input type="text" name="submittedBy">
+
+<button type="submit">Submit</button>
+
+<div class="success" id="msg"></div>
+</form>
+</div>
+
+<script>
+const WEBHOOK = "PASTE_YOUR_MAKE_WEBHOOK";
+
+document.getElementById("walkForm").addEventListener("submit", async e => {
+e.preventDefault();
+
+const formData = new FormData(e.target);
+
+const payload = {
+date: new Date().toLocaleDateString(),
+shift: formData.get("shift"),
+stake: formData.get("stake"),
+count: formData.get("count"),
+submittedBy: formData.get("submittedBy")
+};
+
+await fetch(WEBHOOK, {
+method: "POST",
+headers: {"Content-Type":"application/json"},
+body: JSON.stringify(payload)
+});
+
+document.getElementById("msg").textContent = "Walk-in recorded ✓";
+e.target.reset();
+});
+</script>
+
+</body>
+</html>
