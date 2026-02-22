@@ -24,6 +24,8 @@
   .muted { color:#6b7280; font-size:13px; margin-top:6px; line-height:1.35; }
   code { background:#f3f4f6; padding:2px 6px; border-radius:6px; }
   .box { margin-top:12px; padding:12px; border:1px solid #e5e7eb; border-radius:12px; background:#fbfbfc; }
+  .checkRow { display:flex; gap:10px; align-items:flex-start; margin-top:12px; }
+  .checkRow input { margin-top:4px; width:18px; height:18px; }
 </style>
 </head>
 <body>
@@ -31,8 +33,7 @@
 <div class="card">
   <h2>Walk-In Tally</h2>
   <div class="muted">
-    Use this for walk-ins counted by stake. This does not record individual names.
-    Shift is determined automatically from the time you tap <b>Submit</b> (before noon = AM, noon or later = PM).
+    Use this for walk-ins counted by stake. Shift is determined automatically based on time of submission.
   </div>
 
   <div id="geoBox" class="box" style="display:none;">
@@ -51,8 +52,15 @@
     <label for="count">Number of People</label>
     <input id="count" type="number" name="count" min="1" required>
 
-    <label for="submittedBy">Your Name (required)</label>
+    <label for="submittedBy">Your Full Name (Walk-in Volunteer)</label>
     <input id="submittedBy" type="text" name="submittedBy" autocomplete="name" required>
+
+    <div class="checkRow">
+      <input type="checkbox" id="safetyBriefing" name="safetyBriefing">
+      <div class="muted">
+        I received the orchard safety briefing today and agree to follow orchard safety rules.
+      </div>
+    </div>
 
     <div class="row">
       <button id="submitBtn" type="submit">Submit</button>
@@ -65,12 +73,8 @@
 </div>
 
 <script>
-/***********************
- * CONFIG
- ***********************/
 const WEBHOOK = "https://hook.us2.make.com/dn8du4dk8n4jdxothrkl2ai6dl5kcyic";
 
-// Hard geofence (same as check-in)
 const GEOFENCE_CENTER_LAT = 41.301141;
 const GEOFENCE_CENTER_LNG = -112.07506;
 const GEOFENCE_RADIUS_METERS = 300;
@@ -81,28 +85,12 @@ const GEO_OPTS = {
   maximumAge: 60000
 };
 
-/***********************
- * STAKE LIST (match SingleSignUp keys)
- ***********************/
 const STAKES = [
-  "BenLomond",
-  "Hooper",
-  "PerryUtah",
-  "OgdenMoundFort",
-  "WestHaven",
-  "PleasantView",
-  "PlainCity",
-  "NorthOgdenEast",
-  "Kanesville",
-  "OgdenWest",
-  "HooperUtahPioneerTrail",
-  "WestHavenNorth",
-  "Willard"
+  "BenLomond","Hooper","PerryUtah","OgdenMoundFort","WestHaven",
+  "PleasantView","PlainCity","NorthOgdenEast","Kanesville",
+  "OgdenWest","HooperUtahPioneerTrail","WestHavenNorth","Willard"
 ];
 
-/***********************
- * Helpers
- ***********************/
 const statusEl = document.getElementById("status");
 const hintEl = document.getElementById("hint");
 const geoBox = document.getElementById("geoBox");
@@ -121,23 +109,16 @@ function setStatus(msg, ok=true) {
   statusEl.className = ok ? "status ok" : "status bad";
 }
 
-function clearStatus() {
-  statusEl.textContent = "";
-  statusEl.className = "status";
-  hintEl.textContent = "";
-}
-
 function distanceMeters(lat1, lon1, lat2, lon2) {
   const toRad = (x) => (x * Math.PI) / 180;
   const R = 6371000;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.sin(dLat/2)**2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+    Math.sin(dLon/2)**2;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
 function getPosition() {
@@ -147,22 +128,17 @@ function getPosition() {
   });
 }
 
-// Date-only string (MM/DD/YYYY) in the user's local timezone
 function formatMMDDYYYY(d) {
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
   const yyyy = d.getFullYear();
   return `${mm}/${dd}/${yyyy}`;
 }
 
-// Shift from local time: before 12:00 = AM, 12:00 or later = PM
 function shiftFromTime(d) {
   return d.getHours() < 12 ? "AM Volunteer" : "PM Volunteer";
 }
 
-/***********************
- * Populate stakes
- ***********************/
 STAKES.forEach(s => {
   const opt = document.createElement("option");
   opt.value = s;
@@ -170,29 +146,18 @@ STAKES.forEach(s => {
   stakeSel.appendChild(opt);
 });
 
-/***********************
- * Geofence check
- ***********************/
 async function runGeofence() {
   geoOk = false;
-  geoInfo = null;
   geoBox.style.display = "none";
-  clearStatus();
-  hintEl.textContent = "Checking location…";
+  setStatus("Checking location…");
 
   const pos = await getPosition();
   const lat = pos.coords.latitude;
   const lng = pos.coords.longitude;
   const accuracy = pos.coords.accuracy;
-
   const dist = distanceMeters(lat, lng, GEOFENCE_CENTER_LAT, GEOFENCE_CENTER_LNG);
 
-  geoInfo = {
-    lat, lng,
-    accuracyMeters: accuracy,
-    distanceMeters: dist,
-    radiusMeters: GEOFENCE_RADIUS_METERS
-  };
+  geoInfo = { lat, lng, accuracyMeters: accuracy, distanceMeters: dist };
 
   geoBox.style.display = "block";
   geoText.innerHTML =
@@ -200,24 +165,18 @@ async function runGeofence() {
 
   if (dist > GEOFENCE_RADIUS_METERS) {
     setStatus("Not at orchard location — submission blocked.", false);
-    hintEl.textContent = "Move closer to the orchard and tap Retry Location.";
     return;
   }
 
   geoOk = true;
   setStatus("Location verified ✓", true);
-  hintEl.textContent = "";
 }
 
-/***********************
- * Submit
- ***********************/
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  clearStatus();
 
   if (!geoOk) {
-    setStatus("Location is not verified — tap Retry Location.", false);
+    setStatus("Location not verified.", false);
     return;
   }
 
@@ -226,27 +185,17 @@ form.addEventListener("submit", async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = "Submitting…";
 
-  const stake = (stakeSel.value || "").toString();
-  const count = Number(document.getElementById("count").value || 0);
-  const submittedBy = (document.getElementById("submittedBy").value || "").toString().trim();
-
-  if (!stake || !count || count < 1 || !submittedBy) {
-    setStatus("Please select a stake, enter a count (1+), and enter your name.", false);
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Submit";
-    isSubmitting = false;
-    return;
-  }
-
   const now = new Date();
   const payload = {
     source: "walkin",
-    submittedAt: now.toISOString(),       // precise timestamp (useful for auditing)
-    date: formatMMDDYYYY(now),            // date-only for reporting
-    shift: shiftFromTime(now),            // derived shift
-    stake,
-    count,
-    submittedBy,
+    submittedAt: now.toISOString(),
+    date: formatMMDDYYYY(now),
+    shift: shiftFromTime(now),
+    stake: stakeSel.value,
+    count: Number(document.getElementById("count").value),
+    submittedBy: document.getElementById("submittedBy").value.trim(),
+    safetyBriefingAttested: document.getElementById("safetyBriefing").checked,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     geo: geoInfo
   };
 
@@ -257,19 +206,13 @@ form.addEventListener("submit", async (e) => {
       body: JSON.stringify(payload)
     });
 
-    const text = await r.text();
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${text}`);
+    if (!r.ok) throw new Error("Submission failed");
 
     setStatus("Walk-in recorded ✓", true);
-    hintEl.textContent = `Recorded as ${payload.shift} for ${payload.date}. You may close this page.`;
-
-    // Clear form fields (keep location status shown)
+    hintEl.textContent = `Recorded as ${payload.shift} for ${payload.date}.`;
     form.reset();
-    stakeSel.value = "";
   } catch (err) {
-    console.error(err);
     setStatus("Submit failed. Please tell the orchard lead.", false);
-    hintEl.textContent = "If this continues, try Retry Location and submit again.";
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "Submit";
@@ -277,22 +220,14 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-/***********************
- * Retry location button
- ***********************/
 retryGeoBtn.addEventListener("click", () => {
   runGeofence().catch(err => {
-    console.error(err);
-    setStatus(`Location check failed: ${err.message || err}`, false);
-    hintEl.textContent = "Make sure location is allowed for this site, then try again.";
+    setStatus(`Location check failed: ${err.message}`, false);
   });
 });
 
-// Run geofence on load
 runGeofence().catch(err => {
-  console.error(err);
-  setStatus(`Location check failed: ${err.message || err}`, false);
-  hintEl.textContent = "Allow location for this site, then tap Retry Location.";
+  setStatus(`Location check failed: ${err.message}`, false);
 });
 </script>
 
