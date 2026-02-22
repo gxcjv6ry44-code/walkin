@@ -30,7 +30,10 @@
 
 <div class="card">
   <h2>Walk-In Tally</h2>
-  <div class="muted">Use this for walk-ins counted by stake. This does not record individual names.</div>
+  <div class="muted">
+    Use this for walk-ins counted by stake. This does not record individual names.
+    Shift is determined automatically from the time you tap <b>Submit</b> (before noon = AM, noon or later = PM).
+  </div>
 
   <div id="geoBox" class="box" style="display:none;">
     <div class="muted">
@@ -39,15 +42,7 @@
     </div>
   </div>
 
-  <form id="walkForm">
-    <label for="shift">Shift</label>
-    <select id="shift" name="shift" required>
-      <option value="">Select shift</option>
-      <option value="AM Volunteer">AM Volunteer</option>
-      <option value="PM Volunteer">PM Volunteer</option>
-      <option value="Youth Night">Youth Night</option>
-    </select>
-
+  <form id="walkForm" novalidate>
     <label for="stake">Stake</label>
     <select id="stake" name="stake" required>
       <option value="">Select stake</option>
@@ -56,8 +51,8 @@
     <label for="count">Number of People</label>
     <input id="count" type="number" name="count" min="1" required>
 
-    <label for="submittedBy">Submitted By (optional)</label>
-    <input id="submittedBy" type="text" name="submittedBy" autocomplete="name">
+    <label for="submittedBy">Your Name (required)</label>
+    <input id="submittedBy" type="text" name="submittedBy" autocomplete="name" required>
 
     <div class="row">
       <button id="submitBtn" type="submit">Submit</button>
@@ -87,8 +82,7 @@ const GEO_OPTS = {
 };
 
 /***********************
- * STAKE LIST (match SingleSignUp)
- * value shown to user = key string
+ * STAKE LIST (match SingleSignUp keys)
  ***********************/
 const STAKES = [
   "BenLomond",
@@ -151,6 +145,19 @@ function getPosition() {
     if (!navigator.geolocation) return reject(new Error("Geolocation not supported."));
     navigator.geolocation.getCurrentPosition(resolve, reject, GEO_OPTS);
   });
+}
+
+// Date-only string (MM/DD/YYYY) in the user's local timezone
+function formatMMDDYYYY(d) {
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+// Shift from local time: before 12:00 = AM, 12:00 or later = PM
+function shiftFromTime(d) {
+  return d.getHours() < 12 ? "AM Volunteer" : "PM Volunteer";
 }
 
 /***********************
@@ -219,26 +226,29 @@ form.addEventListener("submit", async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = "Submitting…";
 
-  const fd = new FormData(form);
+  const stake = (stakeSel.value || "").toString();
+  const count = Number(document.getElementById("count").value || 0);
+  const submittedBy = (document.getElementById("submittedBy").value || "").toString().trim();
 
-  const payload = {
-    source: "walkin",
-    // use local date string for now (date-only reporting)
-    date: new Date().toLocaleDateString(),
-    shift: (fd.get("shift") || "").toString(),
-    stake: (fd.get("stake") || "").toString(),
-    count: Number(fd.get("count") || 0),
-    submittedBy: (fd.get("submittedBy") || "").toString().trim(),
-    geo: geoInfo
-  };
-
-  if (!payload.shift || !payload.stake || !payload.count || payload.count < 1) {
-    setStatus("Please select shift, stake, and enter a count of 1 or more.", false);
+  if (!stake || !count || count < 1 || !submittedBy) {
+    setStatus("Please select a stake, enter a count (1+), and enter your name.", false);
     submitBtn.disabled = false;
     submitBtn.textContent = "Submit";
     isSubmitting = false;
     return;
   }
+
+  const now = new Date();
+  const payload = {
+    source: "walkin",
+    submittedAt: now.toISOString(),       // precise timestamp (useful for auditing)
+    date: formatMMDDYYYY(now),            // date-only for reporting
+    shift: shiftFromTime(now),            // derived shift
+    stake,
+    count,
+    submittedBy,
+    geo: geoInfo
+  };
 
   try {
     const r = await fetch(WEBHOOK, {
@@ -251,12 +261,11 @@ form.addEventListener("submit", async (e) => {
     if (!r.ok) throw new Error(`HTTP ${r.status}: ${text}`);
 
     setStatus("Walk-in recorded ✓", true);
-    hintEl.textContent = "Thank you. You may close this page.";
+    hintEl.textContent = `Recorded as ${payload.shift} for ${payload.date}. You may close this page.`;
 
-    // Optional: clear form fields (stake/shift/count) but keep location status
+    // Clear form fields (keep location status shown)
     form.reset();
     stakeSel.value = "";
-    document.getElementById("shift").value = "";
   } catch (err) {
     console.error(err);
     setStatus("Submit failed. Please tell the orchard lead.", false);
