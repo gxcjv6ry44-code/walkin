@@ -1,74 +1,289 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Walk-In Tally</title>
 <style>
-body { font-family: system-ui; padding:20px; background:#f6f7f9; }
-.card { max-width:500px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.1); }
-input, select { width:100%; padding:10px; margin-top:6px; margin-bottom:14px; border-radius:8px; border:1px solid #ccc; }
-button { padding:12px; width:100%; background:#2563eb; color:white; border:0; border-radius:10px; font-weight:700; }
-.success { margin-top:12px; font-weight:700; color:green; }
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; padding:20px; background:#f6f7f9; margin:0; }
+  .card { max-width:560px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.1); }
+  h2 { margin:0 0 10px; }
+  label { font-weight:800; font-size:13px; display:block; margin-top:12px; }
+  input, select {
+    width:100%; padding:10px; margin-top:6px; border-radius:10px; border:1px solid #ccc; box-sizing:border-box;
+    font-size:15px;
+  }
+  .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+  button {
+    padding:12px 14px; background:#2563eb; color:white; border:0; border-radius:12px; font-weight:800; cursor:pointer;
+  }
+  button.secondary { background:#e5e7eb; color:#111827; }
+  button:disabled { opacity:.65; cursor:not-allowed; }
+  .status { margin-top:12px; font-weight:800; }
+  .ok { color:#166534; }
+  .bad { color:#b91c1c; }
+  .muted { color:#6b7280; font-size:13px; margin-top:6px; line-height:1.35; }
+  code { background:#f3f4f6; padding:2px 6px; border-radius:6px; }
+  .box { margin-top:12px; padding:12px; border:1px solid #e5e7eb; border-radius:12px; background:#fbfbfc; }
 </style>
 </head>
 <body>
 
 <div class="card">
-<h2>Walk-In Tally</h2>
+  <h2>Walk-In Tally</h2>
+  <div class="muted">Use this for walk-ins counted by stake. This does not record individual names.</div>
 
-<form id="walkForm">
-<label>Shift</label>
-<select name="shift" required>
-<option value="">Select shift</option>
-<option>AM Volunteer</option>
-<option>PM Volunteer</option>
-<option>Youth Night</option>
-</select>
+  <div id="geoBox" class="box" style="display:none;">
+    <div class="muted">
+      <strong>Location:</strong>
+      <span id="geoText"></span>
+    </div>
+  </div>
 
-<label>Stake</label>
-<select name="stake" required>
-<option value="">Select stake</option>
-<option>North Ogden</option>
-<option>Pleasant View</option>
-<option>Plain City</option>
-</select>
+  <form id="walkForm">
+    <label for="shift">Shift</label>
+    <select id="shift" name="shift" required>
+      <option value="">Select shift</option>
+      <option value="AM Volunteer">AM Volunteer</option>
+      <option value="PM Volunteer">PM Volunteer</option>
+      <option value="Youth Night">Youth Night</option>
+    </select>
 
-<label>Number of People</label>
-<input type="number" name="count" min="1" required>
+    <label for="stake">Stake</label>
+    <select id="stake" name="stake" required>
+      <option value="">Select stake</option>
+    </select>
 
-<label>Submitted By (optional)</label>
-<input type="text" name="submittedBy">
+    <label for="count">Number of People</label>
+    <input id="count" type="number" name="count" min="1" required>
 
-<button type="submit">Submit</button>
+    <label for="submittedBy">Submitted By (optional)</label>
+    <input id="submittedBy" type="text" name="submittedBy" autocomplete="name">
 
-<div class="success" id="msg"></div>
-</form>
+    <div class="row">
+      <button id="submitBtn" type="submit">Submit</button>
+      <button id="retryGeoBtn" class="secondary" type="button">Retry Location</button>
+    </div>
+
+    <div id="status" class="status"></div>
+    <div class="muted" id="hint"></div>
+  </form>
 </div>
 
 <script>
+/***********************
+ * CONFIG
+ ***********************/
 const WEBHOOK = "https://hook.us2.make.com/dn8du4dk8n4jdxothrkl2ai6dl5kcyic";
 
-document.getElementById("walkForm").addEventListener("submit", async e => {
-e.preventDefault();
+// Hard geofence (same as check-in)
+const GEOFENCE_CENTER_LAT = 41.301141;
+const GEOFENCE_CENTER_LNG = -112.07506;
+const GEOFENCE_RADIUS_METERS = 300;
 
-const formData = new FormData(e.target);
-
-const payload = {
-date: new Date().toLocaleDateString(),
-shift: formData.get("shift"),
-stake: formData.get("stake"),
-count: formData.get("count"),
-submittedBy: formData.get("submittedBy")
+const GEO_OPTS = {
+  enableHighAccuracy: true,
+  timeout: 30000,
+  maximumAge: 60000
 };
 
-await fetch(WEBHOOK, {
-method: "POST",
-headers: {"Content-Type":"application/json"},
-body: JSON.stringify(payload)
+/***********************
+ * STAKE LIST (match SingleSignUp)
+ * value shown to user = key string
+ ***********************/
+const STAKES = [
+  "BenLomond",
+  "Hooper",
+  "PerryUtah",
+  "OgdenMoundFort",
+  "WestHaven",
+  "PleasantView",
+  "PlainCity",
+  "NorthOgdenEast",
+  "Kanesville",
+  "OgdenWest",
+  "HooperUtahPioneerTrail",
+  "WestHavenNorth",
+  "Willard"
+];
+
+/***********************
+ * Helpers
+ ***********************/
+const statusEl = document.getElementById("status");
+const hintEl = document.getElementById("hint");
+const geoBox = document.getElementById("geoBox");
+const geoText = document.getElementById("geoText");
+const submitBtn = document.getElementById("submitBtn");
+const retryGeoBtn = document.getElementById("retryGeoBtn");
+const stakeSel = document.getElementById("stake");
+const form = document.getElementById("walkForm");
+
+let geoOk = false;
+let geoInfo = null;
+let isSubmitting = false;
+
+function setStatus(msg, ok=true) {
+  statusEl.textContent = msg || "";
+  statusEl.className = ok ? "status ok" : "status bad";
+}
+
+function clearStatus() {
+  statusEl.textContent = "";
+  statusEl.className = "status";
+  hintEl.textContent = "";
+}
+
+function distanceMeters(lat1, lon1, lat2, lon2) {
+  const toRad = (x) => (x * Math.PI) / 180;
+  const R = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function getPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error("Geolocation not supported."));
+    navigator.geolocation.getCurrentPosition(resolve, reject, GEO_OPTS);
+  });
+}
+
+/***********************
+ * Populate stakes
+ ***********************/
+STAKES.forEach(s => {
+  const opt = document.createElement("option");
+  opt.value = s;
+  opt.textContent = s;
+  stakeSel.appendChild(opt);
 });
 
-document.getElementById("msg").textContent = "Walk-in recorded ✓";
-e.target.reset();
+/***********************
+ * Geofence check
+ ***********************/
+async function runGeofence() {
+  geoOk = false;
+  geoInfo = null;
+  geoBox.style.display = "none";
+  clearStatus();
+  hintEl.textContent = "Checking location…";
+
+  const pos = await getPosition();
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+  const accuracy = pos.coords.accuracy;
+
+  const dist = distanceMeters(lat, lng, GEOFENCE_CENTER_LAT, GEOFENCE_CENTER_LNG);
+
+  geoInfo = {
+    lat, lng,
+    accuracyMeters: accuracy,
+    distanceMeters: dist,
+    radiusMeters: GEOFENCE_RADIUS_METERS
+  };
+
+  geoBox.style.display = "block";
+  geoText.innerHTML =
+    `<code>${Math.round(dist)}m</code> from orchard (allowed <code>${GEOFENCE_RADIUS_METERS}m</code>, accuracy ±<code>${Math.round(accuracy)}m</code>)`;
+
+  if (dist > GEOFENCE_RADIUS_METERS) {
+    setStatus("Not at orchard location — submission blocked.", false);
+    hintEl.textContent = "Move closer to the orchard and tap Retry Location.";
+    return;
+  }
+
+  geoOk = true;
+  setStatus("Location verified ✓", true);
+  hintEl.textContent = "";
+}
+
+/***********************
+ * Submit
+ ***********************/
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  clearStatus();
+
+  if (!geoOk) {
+    setStatus("Location is not verified — tap Retry Location.", false);
+    return;
+  }
+
+  if (isSubmitting) return;
+  isSubmitting = true;
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Submitting…";
+
+  const fd = new FormData(form);
+
+  const payload = {
+    source: "walkin",
+    // use local date string for now (date-only reporting)
+    date: new Date().toLocaleDateString(),
+    shift: (fd.get("shift") || "").toString(),
+    stake: (fd.get("stake") || "").toString(),
+    count: Number(fd.get("count") || 0),
+    submittedBy: (fd.get("submittedBy") || "").toString().trim(),
+    geo: geoInfo
+  };
+
+  if (!payload.shift || !payload.stake || !payload.count || payload.count < 1) {
+    setStatus("Please select shift, stake, and enter a count of 1 or more.", false);
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit";
+    isSubmitting = false;
+    return;
+  }
+
+  try {
+    const r = await fetch(WEBHOOK, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+
+    const text = await r.text();
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${text}`);
+
+    setStatus("Walk-in recorded ✓", true);
+    hintEl.textContent = "Thank you. You may close this page.";
+
+    // Optional: clear form fields (stake/shift/count) but keep location status
+    form.reset();
+    stakeSel.value = "";
+    document.getElementById("shift").value = "";
+  } catch (err) {
+    console.error(err);
+    setStatus("Submit failed. Please tell the orchard lead.", false);
+    hintEl.textContent = "If this continues, try Retry Location and submit again.";
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit";
+    isSubmitting = false;
+  }
+});
+
+/***********************
+ * Retry location button
+ ***********************/
+retryGeoBtn.addEventListener("click", () => {
+  runGeofence().catch(err => {
+    console.error(err);
+    setStatus(`Location check failed: ${err.message || err}`, false);
+    hintEl.textContent = "Make sure location is allowed for this site, then try again.";
+  });
+});
+
+// Run geofence on load
+runGeofence().catch(err => {
+  console.error(err);
+  setStatus(`Location check failed: ${err.message || err}`, false);
+  hintEl.textContent = "Allow location for this site, then tap Retry Location.";
 });
 </script>
 
