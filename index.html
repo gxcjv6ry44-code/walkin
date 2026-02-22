@@ -184,19 +184,19 @@ form.addEventListener("submit", async (e) => {
   isSubmitting = true;
   submitBtn.disabled = true;
   submitBtn.textContent = "Submitting…";
-
+  const attested = document.getElementById("safetyBriefing").checked;
   const now = new Date();
   const payload = {
-    source: "walkin",
-    submittedAt: now.toISOString(),
-    date: formatMMDDYYYY(now),
-    shift: shiftFromTime(now),
-    stake: stakeSel.value,
-    count: Number(document.getElementById("count").value),
-    submittedBy: document.getElementById("submittedBy").value.trim(),
-    safetyBriefingAttested: document.getElementById("safetyBriefing").checked,
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    geo: geoInfo
+      source: "walkin",
+      submittedAt: now.toISOString(),
+      date: formatMMDDYYYY(now),
+      shift: shiftFromTime(now),
+      stake: stakeSel.value,
+      count: Number(document.getElementById("count").value),
+      submittedBy: document.getElementById("submittedBy").value.trim(),
+      safetyBriefingAttested: attested ? "True" : "False",
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      geo: geoInfo
   };
 
   try {
