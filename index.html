@@ -162,10 +162,12 @@ function shiftFromTime(d) {
   return d.getHours() < 12 ? "AM Volunteer" : "PM Volunteer";
 }
 
+stakeSel.innerHTML = `<option value="">Select stake</option>`;
+
 STAKES.forEach(s => {
   const opt = document.createElement("option");
-  opt.value = s;
-  opt.textContent = s;
+  opt.value = s.value;        // submitted value (e.g., "BenLomond")
+  opt.textContent = s.label;  // displayed text (e.g., "Ben Lomond")
   stakeSel.appendChild(opt);
 });
 
@@ -202,7 +204,13 @@ form.addEventListener("submit", async (e) => {
     setStatus("Location not verified.", false);
     return;
   }
-
+if (!stakeSel.value) {
+  setStatus("Please select a stake.", false);
+  isSubmitting = false;
+  submitBtn.disabled = false;
+  submitBtn.textContent = "Submit";
+  return;
+}
   if (isSubmitting) return;
   isSubmitting = true;
   submitBtn.disabled = true;
