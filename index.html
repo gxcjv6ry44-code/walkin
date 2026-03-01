@@ -47,12 +47,14 @@
     <select id="stake" name="stake" required>
       <option value="">Select stake</option>
     </select>
+    
+    <label for="submittedBy">Your Full Name (Walk-in Volunteer)</label>
+    <input id="submittedBy" type="text" name="submittedBy" autocomplete="name" required>
+    
 
     <label for="count">Number of People</label>
     <input id="count" type="number" name="count" min="1" required>
 
-    <label for="submittedBy">Your Full Name (Walk-in Volunteer)</label>
-    <input id="submittedBy" type="text" name="submittedBy" autocomplete="name" required>
 
     <div class="checkRow">
       <input type="checkbox" id="safetyBriefing" name="safetyBriefing">
@@ -74,8 +76,8 @@
 <script>
 const WEBHOOK = "https://hook.us2.make.com/dn8du4dk8n4jdxothrkl2ai6dl5kcyic";
 
-const GEOFENCE_CENTER_LAT = 41.3275;
-const GEOFENCE_CENTER_LNG = -112.0101;
+const GEOFENCE_CENTER_LAT = 41.30141;
+const GEOFENCE_CENTER_LNG = -112.07506;
 const GEOFENCE_RADIUS_METERS = 200;
 
 const GEO_OPTS = {
