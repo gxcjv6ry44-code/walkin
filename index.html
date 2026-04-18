@@ -80,9 +80,6 @@
     <label for="count">How many people are you checking in (including yourself)?</label>
     <input id="count" type="number" min="1" max="50" value="1" required inputmode="numeric" />
 
-    <label for="phone">Phone <span class="hint">(optional, helps your stake leader send thanks)</span></label>
-    <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555" />
-
     <div class="checkbox-row">
       <input id="youth" type="checkbox" />
       <label for="youth">We are part of a youth group</label>
@@ -172,7 +169,6 @@ const params    = new URLSearchParams(window.location.search);
 const shortId   = params.get("s");
 const paramName = params.get("name");
 const paramStake= params.get("stake");
-const paramPhone= params.get("phone");
 
 const $ = (id) => document.getElementById(id);
 
@@ -212,7 +208,6 @@ async function loadStakes() {
 
 function prefillFromParams() {
   if (paramName)  $("name").value  = paramName;
-  if (paramPhone) $("phone").value = paramPhone;
   if (shortId) {
     $("welcome").style.display = "block";
     $("welcome").textContent = "Welcome back! Confirm your info and tap Check In.";
@@ -225,11 +220,6 @@ function showMessage(text, kind) {
   el.className = "message " + kind;
 }
 
-function normalizePhone(raw) {
-  if (!raw) return null;
-  const digits = raw.replace(/\D+/g, "");
-  return digits.length ? digits : null;
-}
 
 async function submitCheckin(ev) {
   ev.preventDefault();
@@ -245,7 +235,6 @@ async function submitCheckin(ev) {
   const stakeId = $("stake").value;
   const name    = $("name").value.trim();
   const count   = parseInt($("count").value, 10);
-  const phone   = normalizePhone($("phone").value);
   const youth   = $("youth").checked;
   const safety  = $("safety").checked;
 
@@ -262,7 +251,6 @@ async function submitCheckin(ev) {
     stake_id:            parseInt(stakeId, 10),
     submitted_by:        name,
     count:               count,
-    phone:               phone,
     youth_group:         youth,
     safety_acknowledged: safety,
     source:              shortId ? "WebForm" : "WalkIn",
