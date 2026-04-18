@@ -1,336 +1,315 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Walk-In Tally</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Orchard Volunteer Check-In</title>
 <style>
-  body {
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    padding: 20px;
-    background: #f6f7f9;
-    margin: 0;
+  :root {
+    --green:      #2f6b2a;
+    --green-dk:   #235020;
+    --bg:         #f5f7f4;
+    --text:       #1f2a1d;
+    --muted:      #5a6656;
+    --border:     #c9d3c5;
+    --red:        #a13434;
   }
-
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 18px; line-height: 1.4;
+  }
   .card {
-    max-width: 560px;
-    margin: auto;
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,.1);
+    max-width: 480px; margin: 20px auto; padding: 24px;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
-
-  h2 { margin: 0 0 10px; }
-
-  label {
-    font-weight: 800;
-    font-size: 13px;
-    display: block;
-    margin-top: 12px;
+  h1 { margin: 0 0 4px 0; font-size: 24px; color: var(--green-dk); }
+  .sub { margin: 0 0 20px 0; color: var(--muted); font-size: 15px; }
+  label { display: block; margin: 14px 0 6px 0; font-weight: 600; }
+  input[type="text"], input[type="tel"], input[type="number"], select {
+    width: 100%; padding: 12px; font-size: 18px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: #fff; color: var(--text);
   }
-
-  input, select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 6px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-    font-size: 15px;
+  select { appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path fill='%23555' d='M4 6l4 4 4-4z'/></svg>");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+  .checkbox-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin: 14px 0; padding: 10px 12px;
+    background: #f0f4ee; border-radius: 8px;
   }
-
-  .row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 14px;
-    align-items: center;
-  }
-
+  .checkbox-row input { margin-top: 4px; width: 20px; height: 20px; }
+  .checkbox-row label { margin: 0; font-weight: 500; cursor: pointer; }
+  .hint { font-size: 14px; color: var(--muted); margin-top: 4px; }
   button {
-    padding: 12px 14px;
-    background: #2563eb;
-    color: white;
-    border: 0;
-    border-radius: 12px;
-    font-weight: 800;
-    cursor: pointer;
+    width: 100%; margin-top: 18px; padding: 16px;
+    background: var(--green); color: #fff; border: none; border-radius: 8px;
+    font-size: 20px; font-weight: 700; cursor: pointer;
   }
-
-  button:disabled {
-    opacity: .65;
-    cursor: not-allowed;
+  button:hover { background: var(--green-dk); }
+  button:disabled { background: #8ea787; cursor: not-allowed; }
+  .message {
+    margin-top: 16px; padding: 14px; border-radius: 8px;
+    font-size: 16px; display: none;
   }
-
-  .status {
-    margin-top: 12px;
-    font-weight: 800;
-  }
-
-  .ok { color: #166534; }
-  .bad { color: #b91c1c; }
-
-  .muted {
-    color: #6b7280;
-    font-size: 13px;
-    margin-top: 6px;
-    line-height: 1.35;
-  }
-
-  .checkRow {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    margin-top: 12px;
-  }
-
-  .checkRow input {
-    margin-top: 4px;
-    width: 18px;
-    height: 18px;
-    flex: 0 0 auto;
-  }
-
-  .countGrid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-top: 8px;
-  }
-
-  .countBtn {
-    padding: 16px;
-    font-size: 20px;
-    font-weight: 800;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    background: #f3f4f6;
-    color: #111827;
-  }
-
-  .countBtn.selected {
-    background: #2563eb;
-    color: white;
-    border-color: #2563eb;
-  }
+  .message.success { background: #e0f0dd; color: var(--green-dk); display: block; }
+  .message.error   { background: #f7dfdf; color: var(--red);      display: block; }
+  .welcome { background: #e6efe4; padding: 12px; border-radius: 8px;
+    margin-bottom: 16px; font-size: 16px; }
 </style>
 </head>
 <body>
-
 <div class="card">
-  <h2>Walk-In Tally</h2>
-  <div class="muted">
-    Use this for walk-ins counted by stake. Shift is determined automatically based on time of submission.
-  </div>
+  <h1>Orchard Check-In</h1>
+  <p class="sub">Thank you for volunteering today.</p>
 
-  <form id="walkForm" novalidate>
+  <div id="welcome" class="welcome" style="display:none;"></div>
+
+  <form id="checkinForm" autocomplete="off">
 
     <label for="stake">Stake</label>
-    <select id="stake" name="stake" required>
-      <option value="">Select stake</option>
+    <select id="stake" required>
+      <option value="">Select your stake...</option>
     </select>
 
-    <label for="submittedBy">Your Full Name (Walk-in Volunteer)</label>
-    <input id="submittedBy" type="text" name="submittedBy" autocomplete="name" required>
+    <label for="name">Your Name</label>
+    <input id="name" type="text" required autocomplete="name" />
 
-    <label>Number of People</label>
-    <div class="countGrid">
-      <button type="button" class="countBtn" data-count="1">1</button>
-      <button type="button" class="countBtn" data-count="2">2</button>
-      <button type="button" class="countBtn" data-count="3">3</button>
-      <button type="button" class="countBtn" data-count="4">4</button>
-      <button type="button" class="countBtn" data-count="5">5</button>
-      <button type="button" class="countBtn" data-count="6">6</button>
-      <button type="button" class="countBtn" data-count="7">7</button>
-      <button type="button" class="countBtn" data-count="8">8</button>
-      <button type="button" class="countBtn" data-count="9">9</button>
-      <button type="button" class="countBtn" data-count="10">10+</button>
-    </div>
-    <input type="hidden" id="count" name="count" required>
+    <label for="count">How many people are you checking in (including yourself)?</label>
+    <input id="count" type="number" min="1" max="50" value="1" required inputmode="numeric" />
 
-    <div class="checkRow">
-      <input type="checkbox" id="youthGroup" name="youthGroup">
-      <div class="muted">
-        Youth Group
-      </div>
+    <label for="phone">Phone <span class="hint">(optional, helps your stake leader send thanks)</span></label>
+    <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555" />
+
+    <div class="checkbox-row">
+      <input id="youth" type="checkbox" />
+      <label for="youth">We are part of a youth group</label>
     </div>
 
-    <div class="checkRow">
-      <input type="checkbox" id="safetyBriefing" name="safetyBriefing">
-      <div class="muted">
-        I received the orchard safety briefing today and agree to follow orchard safety rules.
-      </div>
+    <div class="checkbox-row">
+      <input id="safety" type="checkbox" required />
+      <label for="safety">
+        I agree to follow the orchard's safety rules
+      </label>
     </div>
 
-    <div class="row">
-      <button id="submitBtn" type="submit">Submit</button>
-    </div>
+    <button type="submit" id="submitBtn">Check In</button>
 
-    <div id="status" class="status"></div>
-    <div class="muted" id="hint"></div>
-
+    <div id="message" class="message"></div>
   </form>
 </div>
 
 <script>
-const WEBHOOK = "https://hook.us2.make.com/dn8du4dk8n4jdxothrkl2ai6dl5kcyic";
+/* =========================================================================
+   CONFIG -- paste your Supabase project URL and anon key below.
+   Both values are safe to ship in public HTML as long as the RLS policies
+   in orchard_checkin_schema.sql are in place (anon can only INSERT, not SELECT).
+   ========================================================================= */
+const SUPABASE_URL      = "https://tfkdkekvtuqepjqsgjoc.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_JRFxF6A8mDcZX2D05CdoCQ_F6_rDbwh";
 
-const STAKES = [
-  { label: "Ben Lomond", value: "BenLomond" },
-  { label: "Brigham City South", value: "BrighamCitySouth" },
-  { label: "Farr West", value: "FarrWest" },
-  { label: "Farr West Poplar", value: "FarrWestPoplar" },
-  { label: "Harrisville", value: "Harrisville" },
-  { label: "Hooper", value: "Hooper" },
-  { label: "Hooper Utah Pioneer Trail", value: "HooperUtahPioneerTrail" },
-  { label: "Huntsville Utah", value: "HuntsvilleUtah" },
-  { label: "Kanesville", value: "Kanesville" },
-  { label: "North Ogden", value: "NorthOgden" },
-  { label: "North Ogden Coldwater", value: "NorthOgdenColdwater" },
-  { label: "North Ogden East", value: "NorthOgdenEast" },
-  { label: "Ogden", value: "Ogden" },
-  { label: "Ogden East Ridge", value: "OgdenEastRidge" },
-  { label: "Ogden Mound Fort", value: "OgdenMoundFort" },
-  { label: "Ogden Utah Mount Lewis", value: "OgdenUtahMountLewis" },
-  { label: "Ogden Utah Weber North", value: "OgdenUtahWeberNorth" },
-  { label: "Ogden West", value: "OgdenWest" },
-  { label: "Perry Utah", value: "PerryUtah" },
-  { label: "Plain City", value: "PlainCity" },
-  { label: "Pleasant View", value: "PleasantView" },
-  { label: "Pleasant View Orchard Springs", value: "PleasantViewOrchardSprings" },
-  { label: "Pleasant View South", value: "PleasantViewSouth" },
-  { label: "West Haven", value: "WestHaven" },
-  { label: "West Haven North", value: "WestHavenNorth" },
-  { label: "Willard", value: "Willard" },
-  { label: "Just Serve", value: "JustServe" },
-  { label: "Share the Light", value: "ShareTheLight" }
+/* =========================================================================
+   SHIFT GATE -- submissions are rejected if the current Mountain Time is
+   outside an allowed shift window. A window opens 45 min before shift
+   start and closes at shift end. To add a harvest (or any other) shift,
+   append another entry to SHIFT_WINDOWS. No backend change required.
+
+   Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat.
+   ========================================================================= */
+const SHIFT_WINDOWS = [
+  // AM Volunteer -- Tue/Wed/Thu/Sat, 8:30-10:30
+  { days: [2, 3, 4, 6], startMin:  8 * 60 + 30, endMin: 10 * 60 + 30 },
+  // PM Volunteer -- Tue/Wed/Thu,    5:30-7:30 (youth groups on Wed)
+  { days: [2, 3, 4],    startMin: 17 * 60 + 30, endMin: 19 * 60 + 30 },
 ];
+const EARLY_OPEN_MIN = 45;
 
-const statusEl = document.getElementById("status");
-const hintEl = document.getElementById("hint");
-const submitBtn = document.getElementById("submitBtn");
-const stakeSel = document.getElementById("stake");
-const form = document.getElementById("walkForm");
-const countInput = document.getElementById("count");
-const countButtons = document.querySelectorAll(".countBtn");
+function checkInAllowed() {
+  // Extract wall-clock weekday/hour/minute in Mountain Time using
+  // Intl.DateTimeFormat.formatToParts(). This is reliable across Safari,
+  // Chrome, Firefox -- unlike `new Date(date.toLocaleString(...))`,
+  // which Safari parses as Invalid Date.
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Denver",
+      hour12:   false,
+      weekday:  "short",
+      hour:     "2-digit",
+      minute:   "2-digit",
+    }).formatToParts(new Date()).map(p => [p.type, p.value])
+  );
+  const DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const dow    = DOW[parts.weekday];
+  const nowMin = parseInt(parts.hour, 10) * 60 + parseInt(parts.minute, 10);
 
-let isSubmitting = false;
+  // Uncomment for debugging in the browser console:
+  // console.log("[checkInAllowed]", { dow, nowMin, parts });
 
-function setStatus(msg, ok = true) {
-  statusEl.textContent = msg || "";
-  statusEl.className = ok ? "status ok" : "status bad";
+  for (const w of SHIFT_WINDOWS) {
+    if (w.days.includes(dow)
+        && nowMin >= (w.startMin - EARLY_OPEN_MIN)
+        && nowMin <= w.endMin) {
+      return { ok: true };
+    }
+  }
+  return {
+    ok: false,
+    message: "Check-in isn't open yet. You can check in starting 45 minutes before your shift."
+  };
 }
 
-function formatISODate(d) {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+/* =========================================================================
+   URL params (set by the SMS link for signup-linked check-ins):
+     ?s=<short_id>     -> the 10-char signup ID from the Data sheet
+     ?name=<name>      -> optional, pre-fills the name field
+     ?stake=<name>     -> optional, pre-selects the stake
+     ?phone=<phone>    -> optional, pre-fills the phone field
+   Walk-ins just open the form with no params.
+   ========================================================================= */
+const params    = new URLSearchParams(window.location.search);
+const shortId   = params.get("s");
+const paramName = params.get("name");
+const paramStake= params.get("stake");
+const paramPhone= params.get("phone");
+
+const $ = (id) => document.getElementById(id);
+
+async function loadStakes() {
+  try {
+    const res = await fetch(
+      SUPABASE_URL + "/rest/v1/stakes?select=id,name&active=eq.true&order=sort_order.asc",
+      {
+        headers: {
+          "apikey":        SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+        },
+      }
+    );
+    if (!res.ok) throw new Error("Could not load stakes: " + res.status);
+    const stakes = await res.json();
+    const sel = $("stake");
+    stakes.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.name;
+      sel.appendChild(opt);
+    });
+
+    // Pre-select if URL param matched a stake name
+    if (paramStake) {
+      const match = Array.from(sel.options).find(o =>
+        o.textContent.toLowerCase() === paramStake.toLowerCase()
+      );
+      if (match) sel.value = match.value;
+    }
+  } catch (e) {
+    showMessage("Could not load stakes list. Please check your internet and refresh.", "error");
+    console.error(e);
+  }
 }
 
-function shiftFromTime(d) {
-  return d.getHours() < 12 ? "AM Volunteer" : "PM Volunteer";
+function prefillFromParams() {
+  if (paramName)  $("name").value  = paramName;
+  if (paramPhone) $("phone").value = paramPhone;
+  if (shortId) {
+    $("welcome").style.display = "block";
+    $("welcome").textContent = "Welcome back! Confirm your info and tap Check In.";
+  }
 }
 
-function selectCount(value) {
-  countInput.value = value;
-  countButtons.forEach(btn => {
-    btn.classList.toggle("selected", btn.dataset.count === String(value));
-  });
+function showMessage(text, kind) {
+  const el = $("message");
+  el.textContent = text;
+  el.className = "message " + kind;
 }
 
-STAKES.forEach(s => {
-  const opt = document.createElement("option");
-  opt.value = s.value;
-  opt.textContent = s.label;
-  stakeSel.appendChild(opt);
-});
-
-const savedStake = localStorage.getItem("lastStake");
-if (savedStake) {
-  stakeSel.value = savedStake;
+function normalizePhone(raw) {
+  if (!raw) return null;
+  const digits = raw.replace(/\D+/g, "");
+  return digits.length ? digits : null;
 }
 
-stakeSel.addEventListener("change", () => {
-  localStorage.setItem("lastStake", stakeSel.value);
-});
+async function submitCheckin(ev) {
+  ev.preventDefault();
 
-countButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    selectCount(btn.dataset.count);
-  });
-});
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  if (!stakeSel.value) {
-    setStatus("Please select a stake.", false);
+  // Shift-window gate: matches the behavior of the old walk-in form, which
+  // rejected submissions more than 45 minutes before a shift start.
+  const gate = checkInAllowed();
+  if (!gate.ok) {
+    showMessage(gate.message, "error");
     return;
   }
 
-  if (!document.getElementById("submittedBy").value.trim()) {
-    setStatus("Please enter your full name.", false);
+  const stakeId = $("stake").value;
+  const name    = $("name").value.trim();
+  const count   = parseInt($("count").value, 10);
+  const phone   = normalizePhone($("phone").value);
+  const youth   = $("youth").checked;
+  const safety  = $("safety").checked;
+
+  if (!stakeId || !name || !count || !safety) {
+    showMessage("Please fill in your stake, name, count, and accept the safety rules.", "error");
     return;
   }
 
-  if (!countInput.value) {
-    setStatus("Please select the number of people.", false);
-    return;
-  }
+  $("submitBtn").disabled = true;
+  $("submitBtn").textContent = "Checking in...";
+  showMessage("", "");
 
-  if (isSubmitting) return;
-
-  isSubmitting = true;
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Submitting…";
-
-  const attested = document.getElementById("safetyBriefing").checked;
-  const youthGroup = document.getElementById("youthGroup").checked;
-  const now = new Date();
-
-  const payload = {
-    source: "walkin",
-    submittedAt: now.toISOString(),
-    date: formatISODate(now),
-    shift: shiftFromTime(now),
-    stake: stakeSel.value,
-    count: Number(countInput.value),
-    submittedBy: document.getElementById("submittedBy").value.trim(),
-    youthGroup: youthGroup ? "True" : "False",
-    safetyBriefingAttested: attested ? "True" : "False",
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  const row = {
+    stake_id:            parseInt(stakeId, 10),
+    submitted_by:        name,
+    count:               count,
+    phone:               phone,
+    youth_group:         youth,
+    safety_acknowledged: safety,
+    source:              shortId ? "WebForm" : "WalkIn",
+    short_id:            shortId || null,
+    // service_date, shift, hours_per_person, total_hours all filled by DB defaults / trigger
   };
 
   try {
-    const r = await fetch(WEBHOOK, {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/checkins", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      headers: {
+        "apikey":        SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+        "Content-Type":  "application/json",
+        "Prefer":        "return=minimal",
+      },
+      body: JSON.stringify(row),
     });
 
-    if (!r.ok) throw new Error("Submission failed");
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(detail || ("HTTP " + res.status));
+    }
 
-    const lastStake = stakeSel.value;
-
-    setStatus("Walk-in recorded ✓", true);
-    hintEl.textContent = `Recorded as ${payload.shift} for ${payload.date}.`;
-
-    form.reset();
-    stakeSel.value = lastStake;
-    localStorage.setItem("lastStake", lastStake);
-    countInput.value = "";
-    countButtons.forEach(btn => btn.classList.remove("selected"));
-
-  } catch (err) {
-    setStatus("Submit failed. Please tell the orchard lead.", false);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Submit";
-    isSubmitting = false;
+    // Success. Hide the form and show a big friendly thank-you.
+    document.querySelector("form").style.display = "none";
+    $("welcome").style.display = "none";
+    showMessage(
+      "Thank you, " + name + "! You're checked in. Have a great shift at the orchard.",
+      "success"
+    );
+  } catch (e) {
+    console.error(e);
+    $("submitBtn").disabled = false;
+    $("submitBtn").textContent = "Check In";
+    showMessage(
+      "Sorry, something went wrong. Please try again, or ask a volunteer coordinator for help.",
+      "error"
+    );
   }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadStakes();
+  prefillFromParams();
+  document.getElementById("checkinForm").addEventListener("submit", submitCheckin);
 });
 </script>
-
 </body>
 </html>
