@@ -272,9 +272,6 @@ async function submitCheckin(ev) {
 
 if (!res.ok) {
   const detail = await res.text();
-
-if (!res.ok) {
-  const detail = await res.text();
   console.log("Supabase error:", res.status, detail);
 
   if (
@@ -290,9 +287,6 @@ if (!res.ok) {
     );
     return;
   }
-
-  throw new Error(detail || ("HTTP " + res.status));
-}
 
   throw new Error(detail || ("HTTP " + res.status));
 }
