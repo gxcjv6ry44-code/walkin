@@ -121,7 +121,7 @@ const SHIFT_WINDOWS = [
   // PM Volunteer -- Tue/Wed/Thu,    5:30-7:30 (youth groups on Wed)
   { days: [2, 3, 4, 6],    startMin: 17 * 60 + 30, endMin: 19 * 60 + 30 },
 ];
-const EARLY_OPEN_MIN = 300;
+const EARLY_OPEN_MIN = 45;
 
 function checkInAllowed() {
   // Extract wall-clock weekday/hour/minute in Mountain Time using
@@ -226,11 +226,11 @@ async function submitCheckin(ev) {
 
   // Shift-window gate: matches the behavior of the old walk-in form, which
   // rejected submissions more than 45 minutes before a shift start.
-  //const gate = checkInAllowed();
- // if (!gate.ok) {
- //   showMessage(gate.message, "error");
- //   return;
- // }
+  const gate = checkInAllowed();
+  if (!gate.ok) {
+    showMessage(gate.message, "error");
+    return;
+  }
 
   const stakeId = $("stake").value;
   const name    = $("name").value.trim();
