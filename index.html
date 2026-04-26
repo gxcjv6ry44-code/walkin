@@ -273,9 +273,13 @@ async function submitCheckin(ev) {
 if (!res.ok) {
   const detail = await res.text();
 
+if (!res.ok) {
+  const detail = await res.text();
+  console.log("Supabase error:", res.status, detail);
+
   if (
     res.status === 409 ||
-    detail.includes("duplicate key") ||
+    detail.toLowerCase().includes("duplicate") ||
     detail.includes("checkins_dedupe_key_unique")
   ) {
     document.querySelector("form").style.display = "none";
@@ -286,6 +290,9 @@ if (!res.ok) {
     );
     return;
   }
+
+  throw new Error(detail || ("HTTP " + res.status));
+}
 
   throw new Error(detail || ("HTTP " + res.status));
 }
