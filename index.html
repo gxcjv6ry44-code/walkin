@@ -270,30 +270,26 @@ async function submitCheckin(ev) {
       body: JSON.stringify(row),
     });
 
-if (!res.ok) {
-  const detail = await res.text();
-  console.log("Supabase error:", res.status, detail);
+if (
+  res.status === 409 ||
+  detail.toLowerCase().includes("duplicate") ||
+  detail.includes("checkins_dedupe_key_unique")
+) {
+  $("submitBtn").disabled = true;
+  $("submitBtn").textContent = "Already Checked In";
 
-  if (
-    res.status === 409 ||
-    detail.toLowerCase().includes("duplicate") ||
-    detail.includes("checkins_dedupe_key_unique")
-  ) {
-    document.querySelector("form").style.display = "none";
-    $("welcome").style.display = "none";
-    showMessage(
-      "It looks like you are already checked in for this shift. Thank you!",
-      "success"
-    );
-    return;
-  }
+  showMessage(
+    "It looks like you are already checked in for this shift. Thank you!",
+    "success"
+  );
+
+  return;
+}
 
   throw new Error(detail || ("HTTP " + res.status));
 }
 
     // Success. Hide the form and show a big friendly thank-you.
-    document.querySelector("form").style.display = "none";
-    $("welcome").style.display = "none";
     showMessage(
       "Thank you, " + name + "! You're checked in. Have a great shift at the orchard.",
       "success"
