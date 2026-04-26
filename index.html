@@ -6,60 +6,147 @@
 <title>Orchard Volunteer Check-In</title>
 <style>
   :root {
-    --green:      #2f6b2a;
-    --green-dk:   #235020;
-    --bg:         #f5f7f4;
-    --text:       #1f2a1d;
-    --muted:      #5a6656;
-    --border:     #c9d3c5;
-    --red:        #a13434;
+    --green: #2f6b2a;
+    --green-dk: #235020;
+    --bg: #f5f7f4;
+    --text: #1f2a1d;
+    --muted: #5a6656;
+    --border: #c9d3c5;
+    --red: #a13434;
   }
+
   * { box-sizing: border-box; }
+
   html, body {
-    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 18px; line-height: 1.4;
+    font-size: 18px;
+    line-height: 1.4;
   }
+
   .card {
-    max-width: 480px; margin: 20px auto; padding: 24px;
-    background: #fff; border-radius: 12px;
+    max-width: 480px;
+    margin: 20px auto;
+    padding: 24px;
+    background: #fff;
+    border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
-  h1 { margin: 0 0 4px 0; font-size: 24px; color: var(--green-dk); }
-  .sub { margin: 0 0 20px 0; color: var(--muted); font-size: 15px; }
-  label { display: block; margin: 14px 0 6px 0; font-weight: 600; }
-  input[type="text"], input[type="tel"], input[type="number"], select {
-    width: 100%; padding: 12px; font-size: 18px;
-    border: 1px solid var(--border); border-radius: 8px;
-    background: #fff; color: var(--text);
+
+  h1 {
+    margin: 0 0 4px 0;
+    font-size: 24px;
+    color: var(--green-dk);
   }
-  select { appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path fill='%23555' d='M4 6l4 4 4-4z'/></svg>");
-    background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+
+  .sub {
+    margin: 0 0 20px 0;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  label {
+    display: block;
+    margin: 14px 0 6px 0;
+    font-weight: 600;
+  }
+
+  input[type="text"],
+  input[type="tel"],
+  input[type="number"],
+  select {
+    width: 100%;
+    padding: 12px;
+    font-size: 18px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+  }
+
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path fill='%23555' d='M4 6l4 4 4-4z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
   .checkbox-row {
-    display: flex; align-items: flex-start; gap: 10px;
-    margin: 14px 0; padding: 10px 12px;
-    background: #f0f4ee; border-radius: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 14px 0;
+    padding: 10px 12px;
+    background: #f0f4ee;
+    border-radius: 8px;
   }
-  .checkbox-row input { margin-top: 4px; width: 20px; height: 20px; }
-  .checkbox-row label { margin: 0; font-weight: 500; cursor: pointer; }
-  .hint { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  .checkbox-row input {
+    margin-top: 4px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .checkbox-row label {
+    margin: 0;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
   button {
-    width: 100%; margin-top: 18px; padding: 16px;
-    background: var(--green); color: #fff; border: none; border-radius: 8px;
-    font-size: 20px; font-weight: 700; cursor: pointer;
+    width: 100%;
+    margin-top: 18px;
+    padding: 16px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
   }
+
   button:hover { background: var(--green-dk); }
-  button:disabled { background: #8ea787; cursor: not-allowed; }
-  .message {
-    margin-top: 16px; padding: 14px; border-radius: 8px;
-    font-size: 16px; display: none;
+
+  button:disabled {
+    background: #8ea787;
+    cursor: not-allowed;
   }
-  .message.success { background: #e0f0dd; color: var(--green-dk); display: block; }
-  .message.error   { background: #f7dfdf; color: var(--red);      display: block; }
-  .welcome { background: #e6efe4; padding: 12px; border-radius: 8px;
-    margin-bottom: 16px; font-size: 16px; }
+
+  .message {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 16px;
+    display: none;
+  }
+
+  .message.success {
+    background: #e0f0dd;
+    color: var(--green-dk);
+    display: block;
+  }
+
+  .message.error {
+    background: #f7dfdf;
+    color: var(--red);
+    display: block;
+  }
+
+  .welcome {
+    background: #e6efe4;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 16px;
+  }
 </style>
 </head>
+
 <body>
 <div class="card">
   <h1>Orchard Check-In</h1>
@@ -68,7 +155,6 @@
   <div id="welcome" class="welcome" style="display:none;"></div>
 
   <form id="checkinForm" autocomplete="off">
-
     <label for="stake">Stake</label>
     <select id="stake" required>
       <option value="">Select your stake...</option>
@@ -87,9 +173,7 @@
 
     <div class="checkbox-row">
       <input id="safety" type="checkbox" required />
-      <label for="safety">
-        I agree to follow the orchard's safety rules
-      </label>
+      <label for="safety">I agree to follow the orchard's safety rules</label>
     </div>
 
     <button type="submit" id="submitBtn">Check In</button>
@@ -99,78 +183,59 @@
 </div>
 
 <script>
-/* =========================================================================
-   CONFIG -- paste your Supabase project URL and anon key below.
-   Both values are safe to ship in public HTML as long as the RLS policies
-   in orchard_checkin_schema.sql are in place (anon can only INSERT, not SELECT).
-   ========================================================================= */
-const SUPABASE_URL      = "https://tfkdkekvtuqepjqsgjoc.supabase.co";
+const SUPABASE_URL = "https://tfkdkekvtuqepjqsgjoc.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_JRFxF6A8mDcZX2D05CdoCQ_F6_rDbwh";
 
-/* =========================================================================
-   SHIFT GATE -- submissions are rejected if the current Mountain Time is
-   outside an allowed shift window. A window opens 45 min before shift
-   start and closes at shift end. To add a harvest (or any other) shift,
-   append another entry to SHIFT_WINDOWS. No backend change required.
-
-   Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat.
-   ========================================================================= */
 const SHIFT_WINDOWS = [
-  // AM Volunteer -- Tue/Wed/Thu/Sat, 8:30-10:30
-  { days: [2, 3, 4, 5, 6], startMin:  8 * 60 + 30, endMin: 10 * 60 + 30 },
-  // PM Volunteer -- Tue/Wed/Thu,    5:30-7:30 (youth groups on Wed)
-  { days: [2, 3, 4, 6],    startMin: 17 * 60 + 30, endMin: 19 * 60 + 30 },
+  { days: [2, 3, 4, 5, 6], startMin: 8 * 60 + 30, endMin: 10 * 60 + 30 },
+  { days: [2, 3, 4, 6], startMin: 17 * 60 + 30, endMin: 19 * 60 + 30 },
 ];
+
 const EARLY_OPEN_MIN = 45;
 
+const params = new URLSearchParams(window.location.search);
+const shortId = params.get("s");
+const paramName = params.get("name");
+const paramStake = params.get("stake");
+
+const $ = (id) => document.getElementById(id);
+
+function showMessage(text, kind) {
+  const el = $("message");
+  el.textContent = text;
+  el.className = kind ? "message " + kind : "message";
+}
+
 function checkInAllowed() {
-  // Extract wall-clock weekday/hour/minute in Mountain Time using
-  // Intl.DateTimeFormat.formatToParts(). This is reliable across Safari,
-  // Chrome, Firefox -- unlike `new Date(date.toLocaleString(...))`,
-  // which Safari parses as Invalid Date.
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-US", {
       timeZone: "America/Denver",
-      hour12:   false,
-      weekday:  "short",
-      hour:     "2-digit",
-      minute:   "2-digit",
+      hour12: false,
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
     }).formatToParts(new Date()).map(p => [p.type, p.value])
   );
+
   const DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-  const dow    = DOW[parts.weekday];
+  const dow = DOW[parts.weekday];
   const nowMin = parseInt(parts.hour, 10) * 60 + parseInt(parts.minute, 10);
 
-  // Uncomment for debugging in the browser console:
-  // console.log("[checkInAllowed]", { dow, nowMin, parts });
-
   for (const w of SHIFT_WINDOWS) {
-    if (w.days.includes(dow)
-        && nowMin >= (w.startMin - EARLY_OPEN_MIN)
-        && nowMin <= w.endMin) {
+    if (
+      w.days.includes(dow) &&
+      nowMin >= (w.startMin - EARLY_OPEN_MIN) &&
+      nowMin <= w.endMin
+    ) {
       return { ok: true };
     }
   }
+
   return {
     ok: false,
     message: "Check-in isn't open yet. You can check in starting 45 minutes before your shift."
   };
 }
-
-/* =========================================================================
-   URL params (set by the SMS link for signup-linked check-ins):
-     ?s=<short_id>     -> the 10-char signup ID from the Data sheet
-     ?name=<name>      -> optional, pre-fills the name field
-     ?stake=<name>     -> optional, pre-selects the stake
-     ?phone=<phone>    -> optional, pre-fills the phone field
-   Walk-ins just open the form with no params.
-   ========================================================================= */
-const params    = new URLSearchParams(window.location.search);
-const shortId   = params.get("s");
-const paramName = params.get("name");
-const paramStake= params.get("stake");
-
-const $ = (id) => document.getElementById(id);
 
 async function loadStakes() {
   try {
@@ -178,14 +243,19 @@ async function loadStakes() {
       SUPABASE_URL + "/rest/v1/stakes?select=id,name&active=eq.true&order=sort_order.asc",
       {
         headers: {
-          "apikey":        SUPABASE_ANON_KEY,
+          "apikey": SUPABASE_ANON_KEY,
           "Authorization": "Bearer " + SUPABASE_ANON_KEY,
         },
       }
     );
-    if (!res.ok) throw new Error("Could not load stakes: " + res.status);
+
+    if (!res.ok) {
+      throw new Error("Could not load stakes: " + res.status);
+    }
+
     const stakes = await res.json();
     const sel = $("stake");
+
     stakes.forEach(s => {
       const opt = document.createElement("option");
       opt.value = s.id;
@@ -193,50 +263,49 @@ async function loadStakes() {
       sel.appendChild(opt);
     });
 
-    // Pre-select if URL param matched a stake name
     if (paramStake) {
       const match = Array.from(sel.options).find(o =>
         o.textContent.toLowerCase() === paramStake.toLowerCase()
       );
-      if (match) sel.value = match.value;
+
+      if (match) {
+        sel.value = match.value;
+      }
     }
   } catch (e) {
-    showMessage("Could not load stakes list. Please check your internet and refresh.", "error");
     console.error(e);
+    showMessage("Could not load stakes list. Please check your internet and refresh.", "error");
   }
 }
 
 function prefillFromParams() {
-  if (paramName)  $("name").value  = paramName;
+  if (paramName) {
+    $("name").value = paramName;
+  }
+
   if (shortId) {
     $("welcome").style.display = "block";
     $("welcome").textContent = "Welcome back! Confirm your info and tap Check In.";
   }
 }
 
-function showMessage(text, kind) {
-  const el = $("message");
-  el.textContent = text;
-  el.className = "message " + kind;
-}
-
-
 async function submitCheckin(ev) {
   ev.preventDefault();
 
-  // Shift-window gate: matches the behavior of the old walk-in form, which
-  // rejected submissions more than 45 minutes before a shift start.
- // const gate = checkInAllowed();
- // if (!gate.ok) {
- //   showMessage(gate.message, "error");
-  //  return;
- // }
+  /*
+  // Re-enable this block when you want the shift-window gate active.
+  const gate = checkInAllowed();
+  if (!gate.ok) {
+    showMessage(gate.message, "error");
+    return;
+  }
+  */
 
   const stakeId = $("stake").value;
-  const name    = $("name").value.trim();
-  const count   = parseInt($("count").value, 10);
-  const youth   = $("youth").checked;
-  const safety  = $("safety").checked;
+  const name = $("name").value.trim();
+  const count = parseInt($("count").value, 10);
+  const youth = $("youth").checked;
+  const safety = $("safety").checked;
 
   if (!stakeId || !name || !count || !safety) {
     showMessage("Please fill in your stake, name, count, and accept the safety rules.", "error");
@@ -248,56 +317,63 @@ async function submitCheckin(ev) {
   showMessage("", "");
 
   const row = {
-    stake_id:            parseInt(stakeId, 10),
-    submitted_by:        name,
-    count:               count,
-    youth_group:         youth,
+    stake_id: parseInt(stakeId, 10),
+    submitted_by: name,
+    count: count,
+    youth_group: youth,
     safety_acknowledged: safety,
-    source:              shortId ? "WebForm" : "WalkIn",
-    short_id:            shortId || null,
-    // service_date, shift, hours_per_person, total_hours all filled by DB defaults / trigger
+    source: shortId ? "WebForm" : "WalkIn",
+    short_id: shortId || null,
   };
 
   try {
     const res = await fetch(SUPABASE_URL + "/rest/v1/checkins", {
       method: "POST",
       headers: {
-        "apikey":        SUPABASE_ANON_KEY,
+        "apikey": SUPABASE_ANON_KEY,
         "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-        "Content-Type":  "application/json",
-        "Prefer":        "return=minimal",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
       },
       body: JSON.stringify(row),
     });
 
-if (
-  res.status === 409 ||
-  detail.toLowerCase().includes("duplicate") ||
-  detail.includes("checkins_dedupe_key_unique")
-) {
-  $("submitBtn").disabled = true;
-  $("submitBtn").textContent = "Already Checked In";
+    if (!res.ok) {
+      const detail = await res.text();
+      console.log("Supabase error:", res.status, detail);
 
-  showMessage(
-    "It looks like you are already checked in for this shift. Thank you!",
-    "success"
-  );
+      if (
+        res.status === 409 ||
+        detail.toLowerCase().includes("duplicate") ||
+        detail.includes("checkins_dedupe_key_unique")
+      ) {
+        $("submitBtn").disabled = true;
+        $("submitBtn").textContent = "Already Checked In";
 
-  return;
-}
+        showMessage(
+          "It looks like you are already checked in for this shift. Thank you!",
+          "success"
+        );
 
-  throw new Error(detail || ("HTTP " + res.status));
-}
+        return;
+      }
 
-    // Success. Hide the form and show a big friendly thank-you.
+      throw new Error(detail || ("HTTP " + res.status));
+    }
+
+    $("submitBtn").disabled = true;
+    $("submitBtn").textContent = "Checked In";
+
     showMessage(
       "Thank you, " + name + "! You're checked in. Have a great shift at the orchard.",
       "success"
     );
   } catch (e) {
     console.error(e);
+
     $("submitBtn").disabled = false;
     $("submitBtn").textContent = "Check In";
+
     showMessage(
       "Sorry, something went wrong. Please try again, or ask a volunteer coordinator for help.",
       "error"
@@ -308,7 +384,7 @@ if (
 document.addEventListener("DOMContentLoaded", async () => {
   await loadStakes();
   prefillFromParams();
-  document.getElementById("checkinForm").addEventListener("submit", submitCheckin);
+  $("checkinForm").addEventListener("submit", submitCheckin);
 });
 </script>
 </body>
