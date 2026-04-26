@@ -270,10 +270,25 @@ async function submitCheckin(ev) {
       body: JSON.stringify(row),
     });
 
-    if (!res.ok) {
-      const detail = await res.text();
-      throw new Error(detail || ("HTTP " + res.status));
-    }
+if (!res.ok) {
+  const detail = await res.text();
+
+  if (
+    res.status === 409 ||
+    detail.includes("duplicate key") ||
+    detail.includes("checkins_dedupe_key_unique")
+  ) {
+    document.querySelector("form").style.display = "none";
+    $("welcome").style.display = "none";
+    showMessage(
+      "It looks like you are already checked in for this shift. Thank you!",
+      "success"
+    );
+    return;
+  }
+
+  throw new Error(detail || ("HTTP " + res.status));
+}
 
     // Success. Hide the form and show a big friendly thank-you.
     document.querySelector("form").style.display = "none";
