@@ -14,9 +14,7 @@
     --border: #c9d3c5;
     --red: #a13434;
   }
-
   * { box-sizing: border-box; }
-
   html, body {
     margin: 0;
     padding: 0;
@@ -26,7 +24,6 @@
     font-size: 18px;
     line-height: 1.4;
   }
-
   .card {
     max-width: 480px;
     margin: 20px auto;
@@ -35,25 +32,21 @@
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
-
   h1 {
     margin: 0 0 4px 0;
     font-size: 24px;
     color: var(--green-dk);
   }
-
   .sub {
     margin: 0 0 20px 0;
     color: var(--muted);
     font-size: 15px;
   }
-
   label {
     display: block;
     margin: 14px 0 6px 0;
     font-weight: 600;
   }
-
   input[type="text"],
   input[type="tel"],
   input[type="number"],
@@ -66,7 +59,6 @@
     background: #fff;
     color: var(--text);
   }
-
   select {
     appearance: none;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><path fill='%23555' d='M4 6l4 4 4-4z'/></svg>");
@@ -74,7 +66,6 @@
     background-position: right 12px center;
     padding-right: 36px;
   }
-
   .checkbox-row {
     display: flex;
     align-items: flex-start;
@@ -84,19 +75,16 @@
     background: #f0f4ee;
     border-radius: 8px;
   }
-
   .checkbox-row input {
     margin-top: 4px;
     width: 20px;
     height: 20px;
   }
-
   .checkbox-row label {
     margin: 0;
     font-weight: 500;
     cursor: pointer;
   }
-
   button {
     width: 100%;
     margin-top: 18px;
@@ -109,14 +97,11 @@
     font-weight: 700;
     cursor: pointer;
   }
-
   button:hover { background: var(--green-dk); }
-
   button:disabled {
     background: #8ea787;
     cursor: not-allowed;
   }
-
   .message {
     margin-top: 16px;
     padding: 14px;
@@ -124,19 +109,16 @@
     font-size: 16px;
     display: none;
   }
-
   .message.success {
     background: #e0f0dd;
     color: var(--green-dk);
     display: block;
   }
-
   .message.error {
     background: #f7dfdf;
     color: var(--red);
     display: block;
   }
-
   .welcome {
     background: #e6efe4;
     padding: 12px;
@@ -146,66 +128,50 @@
   }
 </style>
 </head>
-
 <body>
 <div class="card">
   <h1>Orchard Check-In</h1>
   <p class="sub">Thank you for volunteering today.</p>
-
   <div id="welcome" class="welcome" style="display:none;"></div>
-
   <form id="checkinForm" autocomplete="off">
     <label for="stake">Stake</label>
     <select id="stake" required>
       <option value="">Select your stake...</option>
     </select>
-
     <label for="name">Your Name</label>
     <input id="name" type="text" required autocomplete="name" />
-
     <label for="count">How many people are you checking in (including yourself)?</label>
-    <input id="count" type="number" min="1" max="50" value="1" required inputmode="numeric" />
-
+    <input id="count" type="number" min="1" max="50" required inputmode="numeric" placeholder="0" />
     <div class="checkbox-row">
       <input id="youth" type="checkbox" />
       <label for="youth">We are part of a youth group</label>
     </div>
-
     <div class="checkbox-row">
       <input id="safety" type="checkbox" required />
       <label for="safety">I agree to follow the orchard's safety rules</label>
     </div>
-
     <button type="submit" id="submitBtn">Check In</button>
-
     <div id="message" class="message"></div>
   </form>
 </div>
-
 <script>
 const SUPABASE_URL = "https://tfkdkekvtuqepjqsgjoc.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_JRFxF6A8mDcZX2D05CdoCQ_F6_rDbwh";
-
 const SHIFT_WINDOWS = [
   { days: [2, 3, 4, 5, 6], startMin: 8 * 60 + 30, endMin: 10 * 60 + 30 },
   { days: [2, 3, 4, 6], startMin: 17 * 60 + 30, endMin: 19 * 60 + 30 },
 ];
-
 const EARLY_OPEN_MIN = 45;
-
 const params = new URLSearchParams(window.location.search);
 const shortId = params.get("s");
 const paramName = params.get("name");
 const paramStake = params.get("stake");
-
 const $ = (id) => document.getElementById(id);
-
 function showMessage(text, kind) {
   const el = $("message");
   el.textContent = text;
   el.className = kind ? "message " + kind : "message";
 }
-
 function checkInAllowed() {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-US", {
@@ -216,11 +182,9 @@ function checkInAllowed() {
       minute: "2-digit",
     }).formatToParts(new Date()).map(p => [p.type, p.value])
   );
-
   const DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
   const dow = DOW[parts.weekday];
   const nowMin = parseInt(parts.hour, 10) * 60 + parseInt(parts.minute, 10);
-
   for (const w of SHIFT_WINDOWS) {
     if (
       w.days.includes(dow) &&
@@ -230,17 +194,15 @@ function checkInAllowed() {
       return { ok: true };
     }
   }
-
   return {
     ok: false,
     message: "Check-in isn't open yet. You can check in starting 45 minutes before your shift."
   };
 }
-
 async function loadStakes() {
   try {
     const res = await fetch(
-      SUPABASE_URL + "/rest/v1/stakes?select=id,name&active=eq.true&order=sort_order.asc",
+      SUPABASE_URL + "/rest/v1/stakes?select=id,name&active=eq.true&order=name.asc",
       {
         headers: {
           "apikey": SUPABASE_ANON_KEY,
@@ -248,26 +210,21 @@ async function loadStakes() {
         },
       }
     );
-
     if (!res.ok) {
       throw new Error("Could not load stakes: " + res.status);
     }
-
     const stakes = await res.json();
     const sel = $("stake");
-
     stakes.forEach(s => {
       const opt = document.createElement("option");
       opt.value = s.id;
       opt.textContent = s.name;
       sel.appendChild(opt);
     });
-
     if (paramStake) {
       const match = Array.from(sel.options).find(o =>
         o.textContent.toLowerCase() === paramStake.toLowerCase()
       );
-
       if (match) {
         sel.value = match.value;
       }
@@ -277,21 +234,17 @@ async function loadStakes() {
     showMessage("Could not load stakes list. Please check your internet and refresh.", "error");
   }
 }
-
 function prefillFromParams() {
   if (paramName) {
     $("name").value = paramName;
   }
-
   if (shortId) {
     $("welcome").style.display = "block";
     $("welcome").textContent = "Welcome back! Confirm your info and tap Check In.";
   }
 }
-
 async function submitCheckin(ev) {
   ev.preventDefault();
-
   /*
   // Re-enable this block when you want the shift-window gate active.
   const gate = checkInAllowed();
@@ -300,22 +253,18 @@ async function submitCheckin(ev) {
     return;
   }
   */
-
   const stakeId = $("stake").value;
   const name = $("name").value.trim();
   const count = parseInt($("count").value, 10);
   const youth = $("youth").checked;
   const safety = $("safety").checked;
-
   if (!stakeId || !name || !count || !safety) {
     showMessage("Please fill in your stake, name, count, and accept the safety rules.", "error");
     return;
   }
-
   $("submitBtn").disabled = true;
   $("submitBtn").textContent = "Checking in...";
   showMessage("", "");
-
   const row = {
     stake_id: parseInt(stakeId, 10),
     submitted_by: name,
@@ -325,7 +274,6 @@ async function submitCheckin(ev) {
     source: shortId ? "WebForm" : "WalkIn",
     short_id: shortId || null,
   };
-
   try {
     const res = await fetch(SUPABASE_URL + "/rest/v1/checkins", {
       method: "POST",
@@ -337,11 +285,9 @@ async function submitCheckin(ev) {
       },
       body: JSON.stringify(row),
     });
-
     if (!res.ok) {
       const detail = await res.text();
       console.log("Supabase error:", res.status, detail);
-
       if (
         res.status === 409 ||
         detail.toLowerCase().includes("duplicate") ||
@@ -349,38 +295,30 @@ async function submitCheckin(ev) {
       ) {
         $("submitBtn").disabled = true;
         $("submitBtn").textContent = "Already Checked In";
-
         showMessage(
           "It looks like you are already checked in for this shift. Thank you!",
           "success"
         );
-
         return;
       }
-
       throw new Error(detail || ("HTTP " + res.status));
     }
-
     $("submitBtn").disabled = true;
     $("submitBtn").textContent = "Checked In";
-
     showMessage(
       "Thank you, " + name + "! You're checked in. Have a great shift at the orchard.",
       "success"
     );
   } catch (e) {
     console.error(e);
-
     $("submitBtn").disabled = false;
     $("submitBtn").textContent = "Check In";
-
     showMessage(
       "Sorry, something went wrong. Please try again, or ask a volunteer coordinator for help.",
       "error"
     );
   }
 }
-
 document.addEventListener("DOMContentLoaded", async () => {
   await loadStakes();
   prefillFromParams();
