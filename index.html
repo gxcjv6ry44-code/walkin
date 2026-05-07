@@ -164,7 +164,7 @@
     <input id="name" type="text" required autocomplete="name" />
 
     <label for="count">How many people are you checking in (including yourself)?</label>
-    <input id="count" type="number" min="1" max="50" value="1" required inputmode="numeric" />
+    <input id="count" type="number" min="1" max="50" required inputmode="numeric" placeholder="0" />
 
     <div class="checkbox-row">
       <input id="youth" type="checkbox" />
@@ -240,7 +240,7 @@ function checkInAllowed() {
 async function loadStakes() {
   try {
     const res = await fetch(
-      SUPABASE_URL + "/rest/v1/stakes?select=id,name&active=eq.true&order=sort_order.asc",
+      SUPABASE_URL + "/rest/v1/stakes?select=id,name&active=eq.true&order=name.asc",
       {
         headers: {
           "apikey": SUPABASE_ANON_KEY,
